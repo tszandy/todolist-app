@@ -1,12 +1,11 @@
 services:
   backend:
+    image: todolist-app-backend-prod
     build:
       target: deploy
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      PORT: 8080
+  frontend:
+    image: todolist-app-frontend-prod
     ports:
-      - "8080:8080"
-    depends_on:
-      db:
-        condition: service_healthy
+      - "3000:80"
+    build:
+      target: deploy

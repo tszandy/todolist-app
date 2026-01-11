@@ -28,17 +28,20 @@ echo "POSTGRES_DB=todo_db" >> .env
 echo "DATABASE_URL=postgres://todo_user:todo_pass@db:5432/todo_db?sslmode=disable" >> .env
 ```
 
-### all prod
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-docker compose -f docker-compose.yml -f docker-compose.prod.yml down
-docker compose -f docker-compose.yml -f docker-compose.prod.yml down -v
+
 ### all dev
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down
-docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
+docker compose -f docker-compose.yml -f docker-compose.dev.yml logs
 
+### all prod
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs
 
 ### db
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up db
@@ -47,21 +50,33 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml down db -v
 docker attach --detach-keys="ctrl-c" todolist-app-db-1
 docker exec -it todolist-app-db-1 bash
 pg_isready -U todo_user -d todo_db
+docker compose -f docker-compose.yml -f docker-compose.dev.yml logs db
 
 ### backend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml build backend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up backend -d
-docker compose -f docker-compose.yml -f docker-compose.dev.yml run backend sh
 docker compose -f docker-compose.yml -f docker-compose.dev.yml logs backend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down backend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down backend -v
-http://localhost:8080/api/todos
+docker compose -f docker-compose.yml -f docker-compose.dev.yml run backend sh
+wget -qO- http://localhost:8080/api/todos
+curl http://localhost:8080/api/todos
+wget -qO- http://localhost:8080/api/health
+curl http://localhost:8080/api/health
 
 ### frontend
+cd frontend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml build frontend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up frontend -d
-docker compose -f docker-compose.yml -f docker-compose.dev.yml logs frontend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down frontend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down frontend -v
-http://localhost:3000
+docker compose -f docker-compose.yml -f docker-compose.dev.yml logs frontend
+docker compose -f docker-compose.yml -f docker-compose.dev.yml run frontend /bin/sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec frontend sh
+wget -qO- http://localhost:5173
+curl http://localhost:5173
+wget -qO- http://localhost:3000
+curl http://localhost:3000
 
+### migrate
+docker compose -f docker-compose.yml -f docker-compose.dev.yml logs migrate

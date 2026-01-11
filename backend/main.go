@@ -16,6 +16,7 @@ import (
 type Todo struct {
 	ID        int64  `json:"id"`
 	Title     string `json:"title"`
+	Body      string `json:"body"`
 	Completed bool   `json:"completed"`
 	CreatedAt string `json:"created_at"`
 }
@@ -34,19 +35,6 @@ func main() {
 		log.Fatalf("unable to connect to db: %v", err)
 	}
 	defer db.Close(ctx)
-
-	// ensure table exists (migrations recommended)
-	_, err = db.Exec(ctx, `
-    CREATE TABLE IF NOT EXISTS todos (
-        id SERIAL PRIMARY KEY,
-        title TEXT NOT NULL,
-        completed BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-    );
-    `)
-	if err != nil {
-		log.Fatalf("failed to create table: %v", err)
-	}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/api/todos", listTodos).Methods("GET")
@@ -78,7 +66,7 @@ func main() {
 
 func listTodos(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	rows, err := db.Query(ctx, "SELECT id, title, completed, created_at FROM todos ORDER BY id")
+	rows, err := db.Query(ctx, "SELECT id, title, body, completed, created_at FROM todos ORDER BY id")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -89,7 +77,7 @@ func listTodos(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var t Todo
 		var ts time.Time
-		if err := rows.Scan(&t.ID, &t.Title, &t.Completed, &ts); err != nil {
+		if err := rows.Scan(&t.ID, &t.Title, &t.Body, &t.Completed, &ts); err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
@@ -101,22 +89,36 @@ func listTodos(w http.ResponseWriter, r *http.Request) {
 
 func createTodo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var t Todo
-	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+	var input struct {
+		Title     string `json:"title"`
+		Body      string `json:"body"`
+		Timestamp string `json:"timestamp"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		http.Error(w, "invalid json", 400)
 		return
 	}
-	if t.Title == "" {
+	if input.Title == "" {
 		http.Error(w, "title required", 400)
 		return
 	}
 	var id int64
-	err := db.QueryRow(ctx, "INSERT INTO todos (title) VALUES ($1) RETURNING id", t.Title).Scan(&id)
+	var createdAt time.Time
+	err := db.QueryRow(ctx,
+		"INSERT INTO todos (title, body, created_at) VALUES ($1, $2, $3) RETURNING id, created_at",
+		input.Title, input.Body, input.Timestamp,
+	).Scan(&id, &createdAt)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	t.ID = id
+	t := Todo{
+		ID:        id,
+		Title:     input.Title,
+		Body:      input.Body,
+		Completed: false,
+		CreatedAt: createdAt.Format(time.RFC3339),
+	}
 	writeJSON(w, t)
 }
 
