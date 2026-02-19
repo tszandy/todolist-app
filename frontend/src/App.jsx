@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
-const API = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+const API =
+  import.meta.env.VITE_API_BASE ||
+  (typeof window !== "undefined"
+    ? `${window.location.protocol}//${window.location.hostname}:8080`
+    : "http://localhost:8080");
 
 export default function App() {
   const [todos, setTodos] = useState([]);
