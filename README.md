@@ -12,7 +12,7 @@ docker ps |grep todolist-app
 docker ps -a --filter "name=todolist-app" -q | xargs -r docker stop
 docker ps -a --filter "name=todolist-app" -q | xargs -r docker rm
 
-docker compose down
+docker compose down -v
 docker compose build
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
@@ -33,7 +33,9 @@ echo "DATABASE_URL=postgres://todo_user:todo_pass@db:5432/todo_db?sslmode=disabl
 docker compose -f docker-compose.yml -f docker-compose.dev.yml build
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml run
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
 docker compose -f docker-compose.yml -f docker-compose.dev.yml logs
 
 ### all prod
@@ -59,6 +61,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml logs backend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down backend
 docker compose -f docker-compose.yml -f docker-compose.dev.yml down backend -v
 docker compose -f docker-compose.yml -f docker-compose.dev.yml run backend sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec backend sh
 wget -qO- http://localhost:8080/api/todos
 curl http://localhost:8080/api/todos
 wget -qO- http://localhost:8080/api/health

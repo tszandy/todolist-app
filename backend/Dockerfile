@@ -7,7 +7,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o backend ./main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o backend ./cmd/server/main.go
 
 # Dev stage for live reloading with Air
 FROM basic AS dev
